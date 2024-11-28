@@ -1,0 +1,7 @@
+Day_Group_Type,Fecha_transaccion,Hora_transaccion,Entrada,Linea,Nombre_Perfil,Tipo_Tarifa,Tipo_Tarjeta,Dispositivo,Valor,Día_semana,Es_festivo,Día_mes
+Dia 1,2024-06-27,10,(09109) Tercer Milenio,(36) Zona A Caracas,(001) Adulto,1,tullave Plus,50,147500.0,3,0,27
+Dia 1,2024-06-27,10,(09109) Tercer Milenio,(36) Zona A Caracas,(001) Adulto,2,tullave Plus,3,0.0,3,0,27
+Dia 1,2024-06-27,11,(09109) Tercer Milenio,(36) Zona A Caracas,(001) Adulto,1,tullave Plus,55,162250.0,3,0,27
+Dia 1,2024-06-27,11,(09109) Tercer Milenio,(36) Zona A Caracas,(001) Adulto,2,tullave Plus,5,0.0,3,0,27
+Dia 1,2024-06-27,12,(09109) Tercer Milenio,(36) Zona A Caracas,(001) Adulto,1,tullave Plus,63,185850.0,3,0,27
+Dia 1,2024-06-27,12,(09109) Tercer Milenio,(36) Zona A Caracas,(001) Adulto,2,tullave Plus,1,0.0,3,0,27

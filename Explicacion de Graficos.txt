@@ -1,0 +1,99 @@
+Grafico clustered de estaciones
+
+El gráfico que compartes es un resultado de un análisis de clustering aplicado a las estaciones utilizando K-Means, representado en dos dimensiones mediante PCA (Análisis de Componentes Principales). Aquí hay una interpretación detallada del gráfico:
+
+1. Ejes (PCA1 y PCA2)
+PCA1 y PCA2 representan las dos principales direcciones (componentes principales) de variación en los datos originales. Aunque estos ejes no tienen un significado físico directo, capturan la mayor parte de la variación en las características de las estaciones después de reducir la dimensionalidad.
+Esto permite visualizar datos de alta dimensión en dos dimensiones sin perder demasiada información.
+2. Colores (Clústeres)
+Cada color representa un clúster identificado por el algoritmo de K-Means:
+Cluster 0 (azul): Estaciones con ciertas características comunes.
+Cluster 1 (naranja): Otro grupo diferenciado.
+Cluster 2 (verde): Menos denso, posiblemente estaciones con patrones de uso únicos.
+Cluster 3 (rojo): Denso y compacto, indicando estaciones con alta similitud en características.
+Separación de clústeres: La distancia entre puntos (y grupos) sugiere cuán diferentes son las estaciones entre sí.
+3. Densidad y dispersión
+Los grupos compactos (como el rojo) indican que las estaciones en ese clúster tienen características similares.
+Los puntos más alejados (en verde, por ejemplo) podrían ser estaciones con comportamientos únicos o atípicos en
+los datos (outliers) que difieren significativamente de los otros clústeres.
+
+4. Interpretación de los clústeres
+Cluster 0 (azul): Puede agrupar estaciones con un uso moderado y patrones homogéneos de transacciones.
+Cluster 1 (naranja): Podría corresponder a estaciones con un comportamiento intermedio, posiblemente en áreas de alta actividad, pero con diversidad en perfiles de usuarios.
+Cluster 2 (verde): Al ser menos denso y disperso, podría representar estaciones con características excepcionales, como estaciones de alta demanda o que sirven a perfiles específicos.
+Cluster 3 (rojo): Representa un clúster compacto con estaciones muy similares, probablemente en zonas con patrones de uso consistentes.
+5. Relación con los datos originales
+Los clústeres reflejan las características utilizadas como entrada para el modelo, como la cantidad de usuarios, las tarifas, los horarios de mayor uso, o los tipos de tarjeta. Por ejemplo:
+Estaciones de alta demanda podrían agruparse juntas.
+Estaciones en zonas residenciales versus comerciales podrían separarse.
+6. Aplicación práctica
+Planeación: Identificar patrones de uso puede ayudar a ajustar la oferta de servicios (frecuencia de buses, horarios, tarifas).
+Análisis de excepciones: Estaciones aisladas (como algunas en verde) podrían requerir un análisis específico para entender sus características.
+Segmentación: Mejoras específicas pueden implementarse según los patrones detectados en cada clúster.
+¿Quieres más detalle sobre cómo los datos originales influyen en estos clústeres o cómo interpretar el comportamiento específico de un clúster?
+
+
+----------------------------------HASTA AQUI---------------------------------------------
+Matriz de correlaciones
+
+Este gráfico representa la matriz de correlaciones entre las variables del dataset. La correlación mide la relación lineal entre dos variables y está expresada en un rango de valores entre -1 y 1:
+
+1: Correlación positiva perfecta (ambas variables aumentan o disminuyen juntas).
+-1: Correlación negativa perfecta (cuando una variable aumenta, la otra disminuye).
+0: No existe una relación lineal significativa entre las variables.
+Análisis del gráfico:
+Relaciones principales:
+
+Dispositivo y Valor (0.97): Existe una correlación positiva muy alta entre estas dos variables. Esto podría indicar que ciertos dispositivos están relacionados con transacciones de alto valor, quizás debido a su uso en estaciones específicas o perfiles particulares.
+Otras relaciones: Las demás correlaciones son cercanas a 0, lo que sugiere que no hay relaciones lineales significativas entre las demás variables, como:
+Día de la semana y Día del mes.
+Día festivo y Valor.
+Variables no correlacionadas:
+
+Por ejemplo, "Es festivo" y las demás variables no muestran una relación significativa. Esto indica que los días festivos no parecen influir directamente en las transacciones analizadas.
+Significado de los colores:
+
+Rojo oscuro (+1): Correlación positiva fuerte.
+Azul oscuro (-1): Correlación negativa fuerte (en este caso no hay valores negativos marcados).
+Colores intermedios: Relación débil o inexistente.
+Interpretación:
+Este gráfico es útil para:
+
+Identificar relaciones importantes: Como la alta correlación entre "Dispositivo" y "Valor", lo que podría ser útil para clasificar los dispositivos según el tipo de transacción que procesan.
+Reducir variables: Si dos variables están fuertemente correlacionadas (como en este caso "Dispositivo" y "Valor"), podrías considerar usar una de ellas en el modelo para simplificar el análisis.
+Descartar relaciones irrelevantes: Variables no correlacionadas no aportan mucha información para modelos predictivos lineales, pero pueden ser útiles en otros contextos.
+
+
+---- HASTA AQUI-----
+
+
+cluster 2
+
+El gráfico representa la agrupación (clustering) de las estaciones basado en las variables Día de la Semana (en el eje X) y Hora de Transacción (en el eje Y). Cada punto indica una combinación de día y hora, y su color corresponde al clúster asignado por el modelo K-Means.
+
+Interpretación:
+Clusters (Colores):
+
+Los datos están divididos en 3 clústeres (0, 1, 2), identificados por colores. Esto indica que el modelo ha encontrado patrones distintos en la relación entre el día de la semana y la hora de las transacciones.
+Distribución por Día de la Semana:
+
+Los clústeres parecen estar muy influenciados por el día de la semana:
+Cluster 0 (rojo): Se concentra en los primeros días de la semana (lunes y martes).
+Cluster 1 (azul): Domina los últimos días de la semana (jueves a domingo).
+Cluster 2 (verde): Tiene poca representación en comparación con los otros dos clústeres.
+Distribución por Hora:
+
+En todas las agrupaciones, las transacciones cubren casi todas las horas del día, lo que sugiere que la actividad se distribuye regularmente durante las horas operativas.
+Posibles patrones:
+
+Podría haber diferencias en los volúmenes de transacciones o perfiles de usuarios entre días laborales (lunes a viernes) y fines de semana.
+El clúster 2 (verde) parece agrupar datos menos frecuentes, lo que podría estar relacionado con días atípicos, horarios poco comunes o eventos especiales.
+
+
+
+
+
+
+
+
+

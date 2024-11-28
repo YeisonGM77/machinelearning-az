@@ -1,0 +1,271 @@
+# Importar las librerías necesarias para análisis y modelado
+import pandas as pd  # Manipulación de datos en formato de tablas (dataframes)
+import numpy as np  # Operaciones matemáticas y de álgebra lineal
+from sklearn.preprocessing import StandardScaler  # Escalado de características numéricas
+from sklearn.cluster import KMeans  # Algoritmo de clustering K-means
+from sklearn.decomposition import PCA  # Reducción de dimensionalidad con PCA
+from sklearn.model_selection import train_test_split  # División de datos en entrenamiento/prueba
+from sklearn.metrics import mean_absolute_error, mean_squared_error  # Métricas para evaluar modelos
+from sklearn.ensemble import RandomForestRegressor  # Modelo de regresión basado en bosques aleatorios
+import matplotlib.pyplot as plt  # Visualización de datos
+import seaborn as sns  # Visualización avanzada de datos basada en Matplotlib
+
+# Cargar el dataset desde un archivo CSV
+ruta_archivo = "validationTroncal2024.csv"  # Ruta del archivo CSV
+df_transmi = pd.read_csv(ruta_archivo)  # Carga el archivo como un DataFrame de pandas
+
+# Mostrar los nombres de las columnas del dataset
+print("Nombre de las columnas del dataframe:")
+print(df_transmi.columns)
+
+# Revisar las primeras filas del dataset para entender la estructura de los datos
+print("Primeras filas del dataset:")
+print(df_transmi.head())
+
+# Mostrar los tipos de datos de cada columna
+print("\nTipos de datos por columna:")
+print(df_transmi.dtypes)
+
+# Convertir la columna 'Fecha_transaccion' a tipo datetime
+# Esto permite realizar operaciones basadas en fechas (como filtros y cálculos)
+df_transmi['Fecha_transaccion'] = pd.to_datetime(df_transmi['Fecha_transaccion'], format='%Y-%m-%d', errors='coerce')
+
+# Verificar valores nulos en cada columna
+print("\nValores nulos por columna:")
+print(df_transmi.isnull().sum())
+
+# Eliminar filas con fechas inválidas (NaN en 'Fecha_transaccion')
+df_transmi = df_transmi.dropna(subset=['Fecha_transaccion'])
+
+# Crear columnas adicionales basadas en la fecha y otros datos
+df_transmi['Dia_semana'] = df_transmi['Fecha_transaccion'].dt.dayofweek  # Día de la semana (0=Lunes, 6=Domingo)
+df_transmi['Es_festivo'] = df_transmi['Day_Group_Type'].apply(lambda x: 1 if 'festivo' in str(x).lower() else 0)  # Festivo = 1
+df_transmi['Dia_mes'] = df_transmi['Fecha_transaccion'].dt.day  # Día del mes
+
+# Revisar las columnas creadas para verificar los cambios
+print("\nDatos después del preprocesamiento:")
+print(df_transmi[['Fecha_transaccion', 'Dia_semana', 'Es_festivo', 'Dia_mes']].head())
+
+# Agrupar datos por estación y hora para análisis de clustering
+df_transmi_agrupado = df_transmi.groupby(['Entrada', 'Hora_transaccion']).agg({
+    'Dispositivo': 'mean',  # Promedio de ingresos por hora
+    'Valor': 'mean',        # Promedio de recaudo por hora
+    'Nombre_Perfil': 'count'  # Cantidad total de transacciones por perfil
+}).reset_index()
+
+# Normalizar las columnas numéricas para clustering (escalado a media 0 y desviación estándar 1)
+scaler = StandardScaler()
+features = ['Dispositivo', 'Valor', 'Nombre_Perfil']  # Características a escalar
+df_transmi_estaciones_scaled = pd.DataFrame(
+    scaler.fit_transform(df_transmi_estaciones[features]),
+    columns=features
+)
+df_transmi_estaciones_scaled['Entrada'] = df_transmi_estaciones['Entrada']  # Añadir de nuevo la columna 'Entrada'
+
+# Aplicar el algoritmo K-Means para agrupar estaciones en clusters
+n_clusters = 4  # Número de clusters deseados
+kmeans = KMeans(n_clusters=n_clusters, random_state=42)  # Inicializar KMeans con semilla para reproducibilidad
+df_transmi_estaciones_scaled['Cluster'] = kmeans.fit_predict(df_transmi_estaciones_scaled[features])  # Asignar clusters
+
+# Visualización de los clusters usando PCA para reducir la dimensionalidad a 2D
+pca = PCA(n_components=2)  # Reducir las dimensiones a 2 para visualización
+pca_result = pca.fit_transform(df_transmi_estaciones_scaled[features])  # Transformar las características escaladas
+df_transmi_estaciones_scaled['PCA1'] = pca_result[:, 0]  # Primer componente principal
+df_transmi_estaciones_scaled['PCA2'] = pca_result[:, 1]  # Segundo componente principal
+
+# Graficar los clusters en un plano PCA
+plt.figure(figsize=(10, 6))
+for cluster in range(n_clusters):
+    cluster_data = df_transmi_estaciones_scaled[df_transmi_estaciones_scaled['Cluster'] == cluster]
+    plt.scatter(cluster_data['PCA1'], cluster_data['PCA2'], label=f'Cluster {cluster}')  # Puntos por cluster
+
+plt.title('Clusters de Estaciones')  # Título del gráfico
+plt.xlabel('PCA1')  # Eje X
+plt.ylabel('PCA2')  # Eje Y
+plt.legend()  # Leyenda para identificar clusters
+plt.show()
+
+# ...continúa el código con documentación similar para las secciones siguientes...
+# Mostrar las estaciones únicas disponibles en los datos
+print("Valores únicos en la columna 'Entrada':")
+print(df_transmi['Entrada'].unique())
+
+# Filtrar los datos para una estación específica para modelado predictivo
+df_transmi_station = df_transmi[df_transmi['Entrada'] == '(02000) Cabecera Autopista Norte']  # Estación seleccionada
+
+if df_transmi_station.empty:  # Validar si hay datos para la estación seleccionada
+    print("\nNo se encontraron datos para la estación seleccionada.")
+else:
+    # Crear variables predictivas (X) y objetivo (y)
+    X = df_transmi_station[['Dia_semana', 'Hora_transaccion', 'Es_festivo']]  # Características para el modelo
+    y = df_transmi_station['Dispositivo']  # Variable objetivo (número de dispositivos)
+
+    # Dividir los datos en conjunto de entrenamiento (80%) y prueba (20%)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Inicializar el modelo Random Forest Regressor
+    model = RandomForestRegressor(
+        n_estimators=100,  # Número de árboles en el bosque
+        random_state=42    # Semilla para asegurar reproducibilidad
+    )
+    model.fit(X_train, y_train)  # Entrenar el modelo con los datos de entrenamiento
+
+    # Realizar predicciones en el conjunto de prueba
+    y_pred = model.predict(X_test)
+
+    # Evaluar el modelo utilizando métricas de error
+    print("\nResultados del modelo:")
+    print("MAE:", mean_absolute_error(y_test, y_pred))  # Error absoluto medio
+    print("RMSE:", mean_squared_error(y_test, y_pred, squared=False))  # Raíz del error cuadrático medio
+
+# Análisis de correlación entre variables
+correlation_matrix = df_transmi[['Dispositivo', 'Dia_semana', 'Es_festivo', 'Dia_mes', 'Hora_transaccion', 'Valor']].corr()
+print("\nMatriz de correlación:")
+print(correlation_matrix)
+
+# Visualizar la matriz de correlación usando un mapa de calor
+plt.figure(figsize=(8, 6))
+sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
+plt.title('Matriz de correlación entre las variables')
+plt.show()
+
+# Seleccionar 3 estaciones para modelado predictivo
+estaciones_seleccionadas = ['(06101) El Tiempo - Camara de Comercio de Bogota', 
+                            '(07002) MADELENA', 
+                            '(09100) Calle 40 Sur']
+
+# Filtrar los datos para las estaciones seleccionadas
+df_estaciones_seleccionadas = df_transmi[df_transmi['Entrada'].isin(estaciones_seleccionadas)]
+
+# Crear un modelo de regresión lineal para predecir la cantidad de pasajeros
+from sklearn.linear_model import LinearRegression
+
+# Preparar datos para el modelo
+X = df_estaciones_seleccionadas[['Dia_semana', 'Hora_transaccion', 'Es_festivo']]  # Características
+y = df_estaciones_seleccionadas['Dispositivo']  # Variable objetivo
+
+# Dividir los datos en conjuntos de entrenamiento y prueba
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42, shuffle=False)
+
+# Entrenar un modelo de regresión lineal
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Realizar predicciones y evaluar el modelo
+y_pred = model.predict(X_test)
+
+print("\nResultados del modelo de regresión lineal:")
+print("MAE:", mean_absolute_error(y_test, y_pred))  # Error absoluto medio
+print("RMSE:", mean_squared_error(y_test, y_pred, squared=False))  # Raíz del error cuadrático medio
+
+# Validar si los clusters aplican para la regresión
+features = ['Dia_semana', 'Hora_transaccion', 'Es_festivo', 'Valor']  # Características relevantes
+X_clustering = df_estaciones_seleccionadas[features]
+
+# Estandarizar las características para clustering
+scaler = StandardScaler()
+X_clustering_scaled = scaler.fit_transform(X_clustering)
+
+# Aplicar KMeans para identificar clusters
+kmeans = KMeans(n_clusters=3, random_state=42)
+df_estaciones_seleccionadas['Cluster'] = kmeans.fit_predict(X_clustering_scaled)
+
+# Visualización de los clusters
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df_estaciones_seleccionadas, x='Dia_semana', y='Hora_transaccion', hue='Cluster', palette='Set1')
+plt.title('Clusters de Estaciones')
+plt.xlabel('Día de la Semana')
+plt.ylabel('Hora de Transacción')
+plt.show()
+
+# Agregar el cluster como una característica adicional para la regresión
+X_clustering = df_estaciones_seleccionadas[['Dia_semana', 'Hora_transaccion', 'Es_festivo', 'Cluster']]
+X_train, X_test, y_train, y_test = train_test_split(X_clustering, y, test_size=0.2, random_state=42, shuffle=False)
+
+# Entrenar nuevamente el modelo de regresión lineal
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+# Evaluar el modelo
+y_pred = model.predict(X_test)
+print("\nResultados del modelo de regresión con clustering:")
+print("MAE:", mean_absolute_error(y_test, y_pred))
+print("RMSE:", mean_squared_error(y_test, y_pred, squared=False))
+
+# Ajuste de hiperparámetros utilizando GridSearchCV
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.model_selection import GridSearchCV
+
+# Inicializar el modelo de Random Forest Regressor
+model_rf = RandomForestRegressor(random_state=42)
+
+# Definir el rango de hiperparámetros para explorar
+param_grid = {
+    'n_estimators': [50, 100, 200],  # Número de árboles en el bosque
+    'max_depth': [None, 10, 20, 30],  # Profundidad máxima de los árboles
+    'min_samples_split': [2, 5, 10]  # Mínimo número de muestras requeridas para dividir un nodo
+}
+
+# Configurar GridSearchCV para buscar la mejor combinación de hiperparámetros
+grid_search = GridSearchCV(
+    estimator=model_rf,              # Modelo base
+    param_grid=param_grid,           # Espacio de búsqueda de hiperparámetros
+    cv=3,                            # Validación cruzada con 3 particiones
+    scoring='neg_mean_squared_error',# Métrica de evaluación
+    n_jobs=-1,                       # Usar todos los procesadores disponibles
+    verbose=2                        # Mostrar detalles del progreso
+)
+
+# Entrenar el modelo utilizando GridSearchCV
+grid_search.fit(X_train, y_train)
+
+# Obtener los mejores hiperparámetros encontrados
+print("Mejores hiperparámetros encontrados:", grid_search.best_params_)
+
+# Usar el mejor modelo encontrado para realizar predicciones
+best_model = grid_search.best_estimator_  # Mejor modelo encontrado por GridSearchCV
+y_pred_best = best_model.predict(X_test)  # Predicciones en el conjunto de prueba
+
+# Evaluar el mejor modelo utilizando MAE y RMSE
+mae_best = mean_absolute_error(y_test, y_pred_best)  # Error absoluto medio
+rmse_best = mean_squared_error(y_test, y_pred_best, squared=False)  # Raíz del error cuadrático medio
+
+print("\nEvaluación con el mejor modelo (GridSearchCV):")
+print(f"MAE: {mae_best:.2f}")  # Mostrar MAE con dos decimales
+print(f"RMSE: {rmse_best:.2f}")  # Mostrar RMSE con dos decimales
+
+# Entrenamiento de un modelo Random Forest con parámetros personalizados
+model_rf = RandomForestRegressor(
+    n_estimators=150,  # Número de árboles ajustado manualmente
+    max_depth=15,      # Profundidad máxima ajustada manualmente
+    min_samples_split=5,  # Mínimo número de muestras requeridas para dividir un nodo
+    random_state=42    # Semilla para reproducibilidad
+)
+model_rf.fit(X_train, y_train)  # Entrenar el modelo con los datos de entrenamiento
+
+# Realizar predicciones y evaluar el modelo
+y_pred_rf = model_rf.predict(X_test)  # Predicciones en el conjunto de prueba
+mae_rf = mean_absolute_error(y_test, y_pred_rf)  # Calcular el MAE
+rmse_rf = mean_squared_error(y_test, y_pred_rf, squared=False)  # Calcular el RMSE
+
+print("\nEvaluación con Random Forest:")
+print(f"MAE: {mae_rf:.2f}")  # Mostrar MAE con dos decimales
+print(f"RMSE: {rmse_rf:.2f}")  # Mostrar RMSE con dos decimales
+
+# Comparación de los resultados de diferentes modelos
+print("\nEvaluación de los diferentes modelos:")
+print(f"Regresión Lineal: MAE = {mae:.2f}, RMSE = {rmse:.2f}")
+print(f"Regresión Lineal con GridSearchCV: MAE = {mae_best:.2f}, RMSE = {rmse_best:.2f}")
+print(f"Random Forest: MAE = {mae_rf:.2f}, RMSE = {rmse_rf:.2f}")
+
+# Seleccionar el mejor modelo basado en las métricas evaluadas
+if rmse_best < rmse_rf and rmse_best < rmse:
+    print("\nEl mejor modelo es el de Regresión Lineal con GridSearchCV.")
+elif rmse_rf < rmse:
+    print("\nEl mejor modelo es el de Random Forest.")
+else:
+    print("\nEl mejor modelo es el de Regresión Lineal.")
+Explicación adicional de cada sección:
+GridSearchCV: Busca la mejor combinación de hiperparámetros dentro del rango definido. Esto asegura un modelo optimizado para las métricas seleccionadas.
+Parámetros ajustados manualmente (Random Forest): Personalizamos parámetros clave como n_estimators, max_depth y min_samples_split para comparar su rendimiento frente al modelo optimizado automáticamente.
+Comparación final: Utilizamos RMSE y MAE para determinar qué modelo ofrece mejores predicciones en términos de precisión.
